@@ -1,0 +1,72 @@
+controller:
+  image:
+    allowPrivilegeEscalation: false
+  extraArgs:
+    http-port: 32080
+    https-port: 32443
+    update-status: "false"
+    election-id: schip-ingress-nginx
+  containerPort:
+    http: 32080
+    https: 32443
+  publishService:
+    enabled: false
+  replicaCount: 1
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 60
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 85
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  service:
+    type: NodePort
+    nodePorts:
+      http: 31080
+      https: 31443
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+  config:
+    enable-access-log-for-default-backend: "true"
+    server-name-hash-bucket-size: "256"
+    server-name-hash-max-size: "512"
+    use-proxy-protocol: "true"
+    log-format-escape-json: "true"
+    use-geoip: "false"
+    use-geoip2: "true"
+    log-format-upstream: '{ "time": "$time_iso8601", "ingress_class": "legacynginx", "remote_addr": "$proxy_protocol_addr","x-forward-for": "$proxy_add_x_forwarded_for", "request_id": "$request_id", "remote_user":"$remote_user", "bytes_sent": $bytes_sent, "request_time": $request_time, "status":$status, "vhost": "$host", "request_proto": "$server_protocol", "path": "$uri","request_query": "$args", "request_length": $request_length, "duration": $request_time,"method": "$request_method", "http_referrer": "$http_referer", "http_user_agent":"$http_user_agent","namespace":"$namespace","ingress_name":"$ingress_name","service_name":"$service_name","geoip":{"country_code": "$geoip2_city_country_code","country_name": "$geoip2_city_country_name","city_name": "$geoip2_city","region_name": "$geoip2_region_name","region_code": "$geoip2_region_code","location": "$geoip2_latitude,$geoip2_longitude"}}'
+  admissionWebhooks:
+    enabled: true
+serviceAccount:
+  create: false
+  name: default
+defaultBackend:
+  enabled: true
+  image:
+    repository: gcr.io/google_containers/defaultbackend
+    tag: "1.2"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  serviceAccount:
+    create: false
+    name: default
